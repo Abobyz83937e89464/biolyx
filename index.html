@@ -272,6 +272,8 @@ button{color:inherit;border:0;outline:0}
     color:rgba(255,255,255,.42);
     font-size:17px;
 }
+.wallpaper-option .wallpaper-preview{background:transparent;}
+
 </style>
 </head>
 <body>
@@ -458,6 +460,71 @@ button{color:inherit;border:0;outline:0}
     function openWallpaper(){ wallpaperModal.classList.add('open'); }
     function closeWallpaperModal(){ wallpaperModal.classList.remove('open'); }
 
+    let biolyxWallpapersLoaded = false;
+    let biolyxWallpapersLoading = null;
+
+    async function loadBiolyxWallpapers() {
+        if (biolyxWallpapersLoaded && window.BiolyxWallpapers) return window.BiolyxWallpapers;
+        if (biolyxWallpapersLoading) return biolyxWallpapersLoading;
+
+        biolyxWallpapersLoading = fetch('./backgrounds.html', { cache: 'no-store' })
+            .then(response => {
+                if (!response.ok) throw new Error('Не удалось загрузить backgrounds.html: HTTP ' + response.status);
+                return response.text();
+            })
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+
+                // backgrounds.html is a module, not a page: only import its styles/scripts.
+                doc.querySelectorAll('style').forEach(style => {
+                    document.head.appendChild(document.importNode(style, true));
+                });
+
+                return new Promise((resolve, reject) => {
+                    const scripts = Array.from(doc.querySelectorAll('script'));
+                    let i = 0;
+
+                    const next = () => {
+                        if (i >= scripts.length) {
+                            biolyxWallpapersLoaded = true;
+                            if (window.BiolyxWallpapers) resolve(window.BiolyxWallpapers);
+                            else reject(new Error('BiolyxWallpapers API не найден'));
+                            return;
+                        }
+
+                        const source = scripts[i++];
+                        const script = document.createElement('script');
+                        script.textContent = source.textContent;
+                        script.onload = next;
+                        script.onerror = () => reject(new Error('Ошибка выполнения wallpaper-модуля'));
+                        document.body.appendChild(script);
+                        // Inline scripts execute immediately; onload is not reliable for them.
+                        setTimeout(next, 0);
+                    };
+
+                    next();
+                });
+            })
+            .catch(error => {
+                biolyxWallpapersLoading = null;
+                console.error(error);
+                throw error;
+            });
+
+        return biolyxWallpapersLoading;
+    }
+
+    async function mountWallpaperPreviews() {
+        try {
+            const module = await loadBiolyxWallpapers();
+            document.querySelectorAll('.wallpaper-option').forEach((card, index) => {
+                module.mountPreview(card, index);
+            });
+        } catch (error) {
+            console.error('Biolyx wallpaper loading failed:', error);
+        }
+    }
+
     addBtn.onclick = () => openAdd();
     closeAdd.onclick = closeAddModal;
     closeEditor.onclick = closeEditorModal;
@@ -481,10 +548,22 @@ button{color:inherit;border:0;outline:0}
         });
     });
 
-    let biolyxWallpaperModuleLoaded=false; let biolyxWallpaperModuleLoading=null;
-    async function loadBiolyxWallpaperModule(){if(biolyxWallpaperModuleLoaded)return window.BiolyxWallpaperModule;if(biolyxWallpaperModuleLoading)return biolyxWallpaperModuleLoading;biolyxWallpaperModuleLoading=fetch('./perelivanueTekstov.html',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(html=>{const doc=new DOMParser().parseFromString(html,'text/html');doc.querySelectorAll('style,script').forEach(n=>{const x=document.createElement(n.tagName.toLowerCase());if(n.tagName.toLowerCase()==='script')x.textContent=n.textContent;else x.textContent=n.textContent;document.body.appendChild(x)});biolyxWallpaperModuleLoaded=true;return window.BiolyxWallpaperModule});return biolyxWallpaperModuleLoading}
-    async function openWallpaperWithModule(){openWallpaper();try{const m=await loadBiolyxWallpaperModule();m.mountPreviews()}catch(e){console.error('Wallpaper module:',e)}}
-    document.querySelectorAll('.wallpaper-option').forEach(btn=>{btn.addEventListener('click',()=>{closeWallpaperModal()})});
+    document.querySelectorAll('.wallpaper-option').forEach((btn, index) => {
+        btn.addEventListener('click', async () => {
+            try {
+                const module = await loadBiolyxWallpapers();
+
+                document.querySelectorAll('.wallpaper-option').forEach(x => x.classList.remove('selected'));
+                btn.classList.add('selected');
+
+                module.applyToWorkspace(index, '.bg');
+            } catch (error) {
+                console.error('Не удалось применить обои:', error);
+            }
+
+            closeWallpaperModal();
+        });
+    });
 
     function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
 
@@ -755,7 +834,7 @@ button{color:inherit;border:0;outline:0}
             longPressTimer = null;
             longPressOpened = true;
             suppressClickUntil = Date.now() + 650;
-            openWallpaperWithModule();
+            openWallpaper();
         }, 520);
 
         if(e.cancelable) e.preventDefault();
