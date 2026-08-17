@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Profile Builder</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+    --bg:#050505;
+    --glass:rgba(255,255,255,.055);
+    --glass-2:rgba(255,255,255,.08);
+    --line:rgba(255,255,255,.13);
+    --text:#fff;
+    --muted:rgba(255,255,255,.55);
+    --soft:rgba(255,255,255,.035);
+    --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+body{overflow-x:hidden}
+button,input{font:inherit}
+button{color:inherit;border:0;outline:0}
+#app{position:relative;min-height:210vh;overflow:hidden}
+.bg{
+    position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+    background:
+      radial-gradient(circle at 18% 18%,rgba(255,255,255,.055),transparent 29%),
+      radial-gradient(circle at 85% 78%,rgba(255,255,255,.04),transparent 32%),
+      #050505;
+}
+.blob{position:absolute;border-radius:50%;filter:blur(88px);opacity:.18;animation:float 7s ease-in-out infinite alternate}
+.b1{width:360px;height:360px;left:-120px;top:4%;background:#fff}
+.b2{width:320px;height:320px;right:-120px;bottom:6%;background:#777;animation-duration:9s}
+@keyframes float{to{transform:translate(55px,45px) scale(1.11)}}
+
+.topbar{
+    position:fixed;z-index:40;top:0;left:0;right:0;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:calc(14px + env(safe-area-inset-top)) 16px 14px;
+    pointer-events:none;
+}
+.topbar .tools{display:flex;gap:10px;pointer-events:auto}
+.tool{
+    width:46px;height:46px;border:1px solid var(--line);background:rgba(10,10,10,.52);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-radius:16px;display:grid;place-items:center;cursor:pointer;
+    transition:.25s var(--ease);box-shadow:0 10px 35px rgba(0,0,0,.25)
+}
+.tool:active{transform:scale(.92)}
+.tool svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.brand{
+    pointer-events:none;padding:10px 14px;border:1px solid var(--line);border-radius:16px;
+    background:rgba(10,10,10,.42);backdrop-filter:blur(20px);
+    font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:800
+}
+
+#canvas{
+    position:relative;z-index:10;
+    width:100%;min-height:210vh;padding-top:92px;
+    touch-action:none;
+}
+.hint{
+    position:fixed;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(84%,360px);text-align:center;color:rgba(255,255,255,.23);
+    font-size:12px;line-height:1.55;pointer-events:none;transition:.35s var(--ease)
+}
+.hint.hide{opacity:0;transform:translate(-50%,-46%) scale(.96)}
+
+.element{
+    position:absolute;z-index:20;user-select:none;-webkit-user-select:none;
+    touch-action:none;cursor:grab;
+    animation:spawn .48s var(--ease) both
+}
+.element.dragging{cursor:grabbing;z-index:60}
+@keyframes spawn{
+    from{opacity:0;transform:translateY(20px) scale(.96)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+}
+.selection{
+    outline:1px solid rgba(255,255,255,.28);
+    outline-offset:8px;
+}
+.drag-handle{
+    position:absolute;right:-12px;top:-12px;width:26px;height:26px;border-radius:50%;
+    display:none;place-items:center;border:1px solid rgba(255,255,255,.18);
+    background:rgba(8,8,8,.82);backdrop-filter:blur(12px)
+}
+.selection .drag-handle{display:grid}
+.drag-handle svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:1.7}
+
+.profile{
+    width:min(88vw,370px);min-height:250px;padding:18px;position:relative;
+    border:1px solid var(--line);border-radius:27px;
+    background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025));
+    backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+    box-shadow:0 30px 70px rgba(0,0,0,.38)
+}
+.profile .profile-top{position:relative;width:100%;height:212px}
+.profile .part-avatar{position:absolute;left:0;top:0}
+.profile .part-name{position:absolute;left:0;top:86px;margin-top:0}
+.profile .part-username{position:absolute;left:0;top:114px;margin-top:0}
+.profile .part-description{position:absolute;left:0;top:143px;margin-top:0;max-width:300px}
+.profile .avatar{width:72px;height:72px;border-radius:50%;border:1px solid var(--line);background:
+    radial-gradient(circle at 34% 28%,#fff 0 8%,transparent 9%),
+    linear-gradient(145deg,#444,#111)}
+.profile .name{font-size:20px;font-weight:800;margin-top:13px}
+.profile .username{font-size:13px;color:var(--muted);margin-top:3px}
+.profile .desc{font-size:12px;line-height:1.5;color:rgba(255,255,255,.64);margin-top:12px}
+
+
+.single-card{
+    width:min(86vw,340px);padding:16px 17px;border:1px solid var(--line);
+    background:var(--glass);backdrop-filter:blur(22px);border-radius:22px
+}
+.single-title{font-size:15px;font-weight:750}
+.single-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.single-avatar{width:72px;height:72px;border-radius:50%;border:1px solid var(--line);background:linear-gradient(145deg,#444,#111)}
+.name-big{font-size:22px;font-weight:800}
+.username-big{font-size:15px;color:var(--muted)}
+.description{font-size:13px;line-height:1.45;color:rgba(255,255,255,.67)}
+
+#addModal,#editorModal,#wallpaperModal{
+    position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+    padding:12px;pointer-events:none;opacity:0;transition:opacity .3s ease;
+    background:rgba(0,0,0,.45);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)
+}
+#addModal.open,#editorModal.open,#wallpaperModal.open{pointer-events:auto;opacity:1}
+.sheet{
+    width:min(100%,500px);max-height:calc(100dvh - 24px);overflow:auto;
+    background:rgba(13,13,13,.86);border:1px solid var(--line);border-radius:28px;
+    box-shadow:0 40px 100px rgba(0,0,0,.55);
+    padding:18px;transform:translateY(35px);transition:transform .38s var(--ease)
+}
+.open .sheet{transform:translateY(0)}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;padding:4px 4px 16px}
+.sheet-title{font-size:17px;font-weight:800}
+.sheet-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.close{
+    width:38px;height:38px;border-radius:13px;background:var(--soft);border:1px solid var(--line);
+    display:grid;place-items:center;cursor:pointer
+}
+.close svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:1.8}
+.option{
+    display:flex;align-items:center;gap:13px;width:100%;padding:15px 14px;margin:8px 0;
+    text-align:left;border:1px solid var(--line);border-radius:18px;
+    background:rgba(255,255,255,.025);cursor:pointer;transition:.22s var(--ease)
+}
+.option:active{transform:scale(.985);background:rgba(255,255,255,.055)}
+.option-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.option-icon svg{width:19px;height:19px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.option-title{font-size:13px;font-weight:750}
+.option-desc{font-size:10px;color:var(--muted);margin-top:3px}
+.chev{margin-left:auto;color:rgba(255,255,255,.25);font-size:18px}
+
+/* Редактор профиля — только перетаскивание */
+.editor-only-sheet{width:min(100%,620px);max-width:620px;max-height:calc(100dvh - 24px);}
+.editor-preview{
+    position:relative;width:100%;height:min(64dvh,500px);min-height:200px;margin:2px 0 0;overflow:hidden;
+    border:1px solid var(--line);border-radius:22px;background:
+      radial-gradient(circle at 30% 20%,rgba(255,255,255,.045),transparent 34%),
+      rgba(255,255,255,.018);touch-action:none;
+}
+.editor-preview::before{
+    content:'ПЕРЕТАСКИВАЙ ЧАСТИ ПРОФИЛЯ';position:absolute;left:50%;top:14px;
+    transform:translateX(-50%);font-size:8px;letter-spacing:1.8px;color:rgba(255,255,255,.22);
+    white-space:nowrap;pointer-events:none;z-index:2;
+}
+.editor-preview .preview-profile{
+    position:absolute;left:50%;top:36px;transform:translateX(-50%);
+    width:min(94%,460px);height:250px;padding:18px;
+    border:1px solid var(--line);border-radius:27px;
+    background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
+    backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+    box-shadow:0 24px 55px rgba(0,0,0,.35);
+}
+.editor-preview .preview-profile .part{
+    position:absolute!important;margin:0!important;cursor:grab;z-index:3;
+    outline:1px solid transparent;outline-offset:5px;transition:outline-color .15s ease;
+}
+.editor-preview .preview-profile .part:active{cursor:grabbing}
+.editor-preview .preview-profile .part-hot{outline-color:rgba(255,255,255,.35)}
+.editor-preview .preview-profile .part-avatar{left:18px;top:18px}
+.editor-preview .preview-profile .part-name{left:18px;top:100px}
+.editor-preview .preview-profile .part-username{left:18px;top:126px}
+.editor-preview .preview-profile .part-description{left:18px;top:150px;max-width:330px}
+.editor-preview .preview-profile .avatar{width:72px;height:72px}
+.editor-preview .preview-profile .name{font-size:20px;font-weight:800;white-space:nowrap}
+.editor-preview .preview-profile .username{font-size:13px;color:var(--muted);white-space:nowrap}
+.editor-preview .preview-profile .desc{font-size:12px;line-height:1.45;color:rgba(255,255,255,.64)}
+
+.editor-help{font-size:10px;color:var(--muted);line-height:1.4;margin:11px 2px 1px}
+
+.preview-mode .element{outline:none!important;cursor:default}
+.preview-mode .drag-handle{display:none!important}
+.preview-mode .selected-overlay{display:none!important}
+
+/* Окно выбора обоев */
+.wallpaper-sheet{
+    width:min(100%,500px);
+    height:min(calc(100dvh - 24px),680px);
+    max-height:calc(100dvh - 24px);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+.wallpaper-list{
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    padding:0 2px 2px;
+    scrollbar-width:none;
+}
+.wallpaper-list::-webkit-scrollbar{display:none}
+.wallpaper-option{
+    position:relative;
+    display:block;
+    width:100%;
+    min-height:92px;
+    margin:8px 0;
+    padding:0;
+    border:1px solid var(--line);
+    border-radius:20px;
+    overflow:hidden;
+    background:rgba(255,255,255,.025);
+    cursor:pointer;
+    transition:.24s var(--ease);
+    text-align:left;
+}
+.wallpaper-option:active{
+    transform:scale(.985);
+    background:rgba(255,255,255,.055);
+}
+.wallpaper-preview{
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 18% 26%,rgba(255,255,255,.08),transparent 26%),
+      radial-gradient(circle at 84% 74%,rgba(255,255,255,.07),transparent 28%),
+      linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.012));
+}
+.wallpaper-option::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(90deg,rgba(0,0,0,.48),rgba(0,0,0,.08),rgba(0,0,0,.34));
+    pointer-events:none;
+}
+.wallpaper-label{
+    position:relative;
+    z-index:2;
+    min-height:92px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    padding:13px 14px;
+}
+.wallpaper-name{
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.2px;
+    text-transform:uppercase;
+}
+.wallpaper-more{
+    width:28px;
+    height:28px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(0,0,0,.22);
+    display:grid;
+    place-items:center;
+    color:rgba(255,255,255,.42);
+    font-size:17px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+    <div class="bg"><div class="blob b1"></div><div class="blob b2"></div></div>
+
+    <div class="topbar">
+        <div class="brand">EDITOR</div>
+        <div class="tools">
+            <button class="tool" id="previewBtn" aria-label="Предпросмотр">
+                <svg viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.8"/></svg>
+            </button>
+            <button class="tool" id="addBtn" aria-label="Добавить">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="canvas"></div>
+    <div class="hint" id="hint">Зажми любое место экрана, чтобы открыть выбор обоев.<br>Элементы можно двигать пальцем.</div>
+</div>
+
+<div id="addModal">
+    <div class="sheet">
+        <div class="sheet-head">
+            <div>
+                <div class="sheet-title">Что добавляем?</div>
+                <div class="sheet-sub">Выбери элемент, который появится на странице</div>
+            </div>
+            <button class="close" id="closeAdd">
+                <svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>
+            </button>
+        </div>
+
+        <button class="option" data-type="profile">
+            <div class="option-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.8 18c.7-3.1 2.5-4.7 5.2-4.7s4.5 1.6 5.2 4.7"/><path d="M16 7h4M16 11h4M16 15h4"/></svg></div>
+            <div><div class="option-title">Окошко для профиля</div><div class="option-desc">Аватар · имя · username · описание · статус</div></div>
+            <div class="chev">›</div>
+        </button>
+
+        <button class="option" data-type="name">
+            <div class="option-icon"><svg viewBox="0 0 24 24"><path d="M5 19 10 5h4l5 14M7 14h10"/></svg></div>
+            <div><div class="option-title">Имя</div><div class="option-desc">Отдельный заголовок профиля</div></div><div class="chev">›</div>
+        </button>
+
+        <button class="option" data-type="username">
+            <div class="option-icon"><svg viewBox="0 0 24 24"><path d="M7 7.5a5 5 0 0 1 9.8-1M17 16.5a5 5 0 0 1-9.8 1"/><path d="M8 13c0 2.2 1.4 4 3.7 4s4.3-1.9 4.3-4V9c0-2.2-1.4-4-3.7-4S8 6.9 8 9v4Z"/></svg></div>
+            <div><div class="option-title">Username</div><div class="option-desc">@username</div></div><div class="chev">›</div>
+        </button>
+
+        <button class="option" data-type="avatar">
+            <div class="option-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="9" cy="10" r="1.7"/><path d="m5.5 17 4-4 3 3 2.5-2.5 3.5 3.5"/></svg></div>
+            <div><div class="option-title">Аватар</div><div class="option-desc">Круглая аватарка</div></div><div class="chev">›</div>
+        </button>
+
+        <button class="option" data-type="description">
+            <div class="option-icon"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9"/></svg></div>
+            <div><div class="option-title">Описание</div><div class="option-desc">Короткий текст под профилем</div></div><div class="chev">›</div>
+        </button>
+
+
+    </div>
+</div>
+
+<div id="wallpaperModal">
+    <div class="sheet wallpaper-sheet">
+        <div class="sheet-head">
+            <div>
+                <div class="sheet-title">На какие обои меняем?</div>
+                <div class="sheet-sub">Выбери любой вариант</div>
+            </div>
+            <button class="close" id="closeWallpaper">
+                <svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>
+            </button>
+        </div>
+
+        <div class="wallpaper-list">
+            <button class="wallpaper-option wallpaper-1" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 01</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-2" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 02</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-3" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 03</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-4" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 04</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-5" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 05</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-6" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 06</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-7" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 07</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-8" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 08</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-9" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 09</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-10" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 10</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-11" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 11</div><div class="wallpaper-more">›</div></div>
+            </button>
+            <button class="wallpaper-option wallpaper-12" type="button">
+                <div class="wallpaper-preview"></div>
+                <div class="wallpaper-label"><div class="wallpaper-name">Обои 12</div><div class="wallpaper-more">›</div></div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="editorModal">
+    <div class="sheet editor-only-sheet">
+        <div class="sheet-head">
+            <div>
+                <div class="sheet-title">Редактирование</div>
+                <div class="sheet-sub">Перетаскивай любую часть профиля прямо здесь</div>
+            </div>
+            <button class="close" id="closeEditor">
+                <svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>
+            </button>
+        </div>
+        <div class="editor-preview" id="editorPreview"></div>
+        <div class="editor-help">Зажми аватар, имя, username, описание или статус и перенеси их в нужное место внутри окна профиля.</div>
+    </div>
+</div>
+
+<script>
+(() => {
+    const tg = window.Telegram?.WebApp;
+    try { tg?.expand(); } catch(e) {}
+
+    const canvas = document.getElementById('canvas');
+    const hint = document.getElementById('hint');
+    const addModal = document.getElementById('addModal');
+    const editorModal = document.getElementById('editorModal');
+    const wallpaperModal = document.getElementById('wallpaperModal');
+    const addBtn = document.getElementById('addBtn');
+    const previewBtn = document.getElementById('previewBtn');
+    const closeAdd = document.getElementById('closeAdd');
+    const closeEditor = document.getElementById('closeEditor');
+    const closeWallpaper = document.getElementById('closeWallpaper');
+    const app = document.getElementById('app');
+
+    let activeProfile = null;
+    let selectedPart = 'avatar';
+    let longPressTimer = null;
+    let suppressClickUntil = 0;
+
+    const icons = {
+      handle: '<svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14M5 8l3-3 3 3M13 16l3 3 3-3"/></svg>'
+    };
+
+    function openAdd(x=null,y=null){
+        addModal.classList.add('open');
+        addModal.dataset.x = x ?? Math.round(window.innerWidth/2);
+        addModal.dataset.y = y ?? Math.round(window.innerHeight/2);
+    }
+    function closeAddModal(){ addModal.classList.remove('open'); }
+    function openEditor(profile){
+        activeProfile = profile;
+        syncEditorInputs();
+        editorModal.classList.add('open');
+    }
+    function closeEditorModal(){ editorModal.classList.remove('open'); }
+    function openWallpaper(){ wallpaperModal.classList.add('open'); }
+    function closeWallpaperModal(){ wallpaperModal.classList.remove('open'); }
+
+    addBtn.onclick = () => openAdd();
+    closeAdd.onclick = closeAddModal;
+    closeEditor.onclick = closeEditorModal;
+    closeWallpaper.onclick = closeWallpaperModal;
+
+    previewBtn.onclick = () => {
+        const mode = app.classList.toggle('preview-mode');
+        previewBtn.title = mode ? 'Редактирование' : 'Предпросмотр';
+        if (mode) {
+            document.querySelectorAll('.selection').forEach(e => e.classList.remove('selection'));
+        }
+    };
+
+    document.querySelectorAll('.option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const type = btn.dataset.type;
+            const x = +addModal.dataset.x || innerWidth/2;
+            const y = +addModal.dataset.y || innerHeight/2;
+            closeAddModal();
+            createElement(type, x, y);
+        });
+    });
+
+    let biolyxWallpaperModuleLoaded=false; let biolyxWallpaperModuleLoading=null;
+    async function loadBiolyxWallpaperModule(){if(biolyxWallpaperModuleLoaded)return window.BiolyxWallpaperModule;if(biolyxWallpaperModuleLoading)return biolyxWallpaperModuleLoading;biolyxWallpaperModuleLoading=fetch('./perelivanueTekstov.html',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(html=>{const doc=new DOMParser().parseFromString(html,'text/html');doc.querySelectorAll('style,script').forEach(n=>{const x=document.createElement(n.tagName.toLowerCase());if(n.tagName.toLowerCase()==='script')x.textContent=n.textContent;else x.textContent=n.textContent;document.body.appendChild(x)});biolyxWallpaperModuleLoaded=true;return window.BiolyxWallpaperModule});return biolyxWallpaperModuleLoading}
+    async function openWallpaperWithModule(){openWallpaper();try{const m=await loadBiolyxWallpaperModule();m.mountPreviews()}catch(e){console.error('Wallpaper module:',e)}}
+    document.querySelectorAll('.wallpaper-option').forEach(btn=>{btn.addEventListener('click',()=>{closeWallpaperModal()})});
+
+    function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
+
+    function placeAt(el,x,y){
+        const w = el.offsetWidth || 120, h = el.offsetHeight || 40;
+        el.style.left = clamp(x - w/2, 10, Math.max(10, innerWidth-w-10)) + 'px';
+        el.style.top = clamp(y + scrollY - h/2, 100 + scrollY, Math.max(100+scrollY, canvas.scrollHeight-h-20)) + 'px';
+    }
+
+    function createElement(type,x,y){
+        hint.classList.add('hide');
+        let el = document.createElement('div');
+        el.className = 'element';
+        el.dataset.type = type;
+        el.innerHTML = elementHTML(type);
+        canvas.appendChild(el);
+        requestAnimationFrame(() => placeAt(el,x,y));
+        enableDrag(el);
+        if(type === 'profile') {
+            el.classList.add('profile');
+            enableProfileLongPress(el);
+            el.addEventListener('click', e => {
+                if (Date.now() < suppressClickUntil) return;
+                if (app.classList.contains('preview-mode')) return;
+                select(el);
+            });
+            activeProfile = el;
+            syncEditorInputs();
+        }
+        el.addEventListener('click', () => { if(!app.classList.contains('preview-mode')) select(el); });
+        select(el);
+    }
+
+    function elementHTML(type){
+        if(type==='profile') return `
+          <div class="drag-handle">${icons.handle}</div>
+          <div class="profile-top">
+            <div class="avatar part-avatar"></div>
+            <div class="name part-name">Ваше имя</div>
+            <div class="username part-username">@username</div>
+            <div class="desc part-description">Короткое описание профиля</div>
+
+          </div>`;
+        if(type==='name') return `<div class="drag-handle">${icons.handle}</div><div class="single-card name-big part-value">Ваше имя</div>`;
+        if(type==='username') return `<div class="drag-handle">${icons.handle}</div><div class="single-card username-big part-value">@username</div>`;
+        if(type==='avatar') return `<div class="drag-handle">${icons.handle}</div><div class="single-avatar part-value"></div>`;
+        if(type==='description') return `<div class="drag-handle">${icons.handle}</div><div class="single-card description part-value">Короткое описание профиля</div>`;
+
+    }
+
+    function select(el){
+        if (app.classList.contains('preview-mode')) return;
+        document.querySelectorAll('.selection').forEach(e=>e.classList.remove('selection'));
+        el.classList.add('selection');
+    }
+
+    function enableDrag(el){
+        let startX=0,startY=0,origL=0,origT=0,dragging=false, moved=false;
+        const down = e => {
+            if (app.classList.contains('preview-mode')) return;
+            const p = e.touches ? e.touches[0] : e;
+            startX=p.clientX; startY=p.clientY;
+            origL=parseFloat(el.style.left)||el.offsetLeft;
+            origT=parseFloat(el.style.top)||el.offsetTop;
+            moved=false;
+            dragging=true;
+            el.classList.add('dragging');
+            select(el);
+            e.preventDefault();
+        };
+        const move = e => {
+            if(!dragging) return;
+            const p = e.touches ? e.touches[0] : e;
+            const nx=origL+(p.clientX-startX);
+            const ny=origT+(p.clientY-startY);
+            el.style.left=clamp(nx,8,innerWidth-el.offsetWidth-8)+'px';
+            el.style.top=ny+'px';
+            moved=true;
+            if(e.cancelable) e.preventDefault();
+        };
+        const up = () => { if(!dragging)return; dragging=false; el.classList.remove('dragging'); if(moved) suppressClickUntil=Date.now()+250; };
+
+        el.addEventListener('pointerdown',down,{passive:false});
+        window.addEventListener('pointermove',move,{passive:false});
+        window.addEventListener('pointerup',up);
+        el.addEventListener('touchstart',down,{passive:false});
+        window.addEventListener('touchmove',move,{passive:false});
+        window.addEventListener('touchend',up);
+    }
+
+    function enableProfileLongPress(el){
+        let timer=null;
+        let fired=false;
+        const start=e=>{
+            if(app.classList.contains('preview-mode')) return;
+            const p=e.touches?e.touches[0]:e;
+            const startX=p.clientX, startY=p.clientY;
+            fired=false;
+            clearTimeout(timer);
+            timer=setTimeout(()=>{
+                fired=true;
+                suppressClickUntil=Date.now()+650;
+                select(el);
+                openEditor(el);
+            },520);
+            el.dataset.lpX=startX;
+            el.dataset.lpY=startY;
+        };
+        const move=e=>{
+            if(!timer) return;
+            const p=e.touches?e.touches[0]:e;
+            const sx=+el.dataset.lpX, sy=+el.dataset.lpY;
+            if(Math.hypot(p.clientX-sx,p.clientY-sy)>10){
+                clearTimeout(timer);
+                timer=null;
+            }
+        };
+        const end=()=>{
+            clearTimeout(timer);
+            timer=null;
+            if(fired) suppressClickUntil=Date.now()+300;
+        };
+        el.addEventListener('pointerdown',start,{passive:false});
+        el.addEventListener('pointermove',move,{passive:false});
+        el.addEventListener('pointerup',end);
+        el.addEventListener('pointercancel',end);
+        el.addEventListener('touchstart',start,{passive:false});
+        el.addEventListener('touchmove',move,{passive:false});
+        el.addEventListener('touchend',end);
+        el.addEventListener('touchcancel',end);
+    }
+
+    function buildEditorPreview(){
+        const stage = document.getElementById('editorPreview');
+        stage.innerHTML = '';
+        if(!activeProfile) return;
+
+        const preview = document.createElement('div');
+        preview.className = 'preview-profile';
+        preview.innerHTML = `
+          <div class="part part-avatar avatar"></div>
+          <div class="part part-name name"></div>
+          <div class="part part-username username"></div>
+          <div class="part part-description desc"></div>
+          `;
+        stage.appendChild(preview);
+
+        preview.querySelector('.part-name').textContent = activeProfile.querySelector('.part-name').textContent;
+        preview.querySelector('.part-username').textContent = activeProfile.querySelector('.part-username').textContent;
+        preview.querySelector('.part-description').textContent = activeProfile.querySelector('.part-description').textContent;
+
+
+        const defaults = {
+            avatar:[18,18],
+            name:[18,100],
+            username:[18,126],
+            description:[18,150]
+        };
+
+        ['avatar','name','username','description'].forEach(name => {
+            const real = activeProfile.querySelector('.part-'+name);
+            const ghost = preview.querySelector('.part-'+name);
+            const hasSaved = real.dataset.editorX !== undefined && real.dataset.editorY !== undefined;
+            let pos = hasSaved ? [Number(real.dataset.editorX), Number(real.dataset.editorY)] : defaults[name];
+            if(!hasSaved){
+                real.dataset.editorX = pos[0];
+                real.dataset.editorY = pos[1];
+                real.style.left = pos[0]+'px';
+                real.style.top = pos[1]+'px';
+            }
+            ghost.style.left = pos[0]+'px';
+            ghost.style.top = pos[1]+'px';
+            enablePreviewPartDrag(ghost, real, preview);
+        });
+        return preview;
+    }
+
+    function syncEditorInputs(){
+        if(!activeProfile || activeProfile.dataset.type!=='profile') return;
+        buildEditorPreview();
+    }
+
+    // Перетаскивание частей профиля внутри окна редактирования.
+    function enablePreviewPartDrag(ghost, real, preview){
+        if(ghost.dataset.dragReady==='1') return;
+        ghost.dataset.dragReady='1';
+        let dragging=false, startX=0, startY=0, startL=0, startT=0;
+
+        const getPoint = e => {
+            if(e.touches && e.touches.length) return e.touches[0];
+            if(e.changedTouches && e.changedTouches.length) return e.changedTouches[0];
+            return e;
+        };
+
+        const down = e => {
+            if(app.classList.contains('preview-mode')) return;
+            const p=getPoint(e);
+            dragging=true;
+            startX=p.clientX;
+            startY=p.clientY;
+            startL=parseFloat(ghost.style.left)||ghost.offsetLeft||0;
+            startT=parseFloat(ghost.style.top)||ghost.offsetTop||0;
+            ghost.classList.add('part-hot');
+            e.stopPropagation();
+            if(e.cancelable) e.preventDefault();
+        };
+
+        const move = e => {
+            if(!dragging) return;
+            const p=getPoint(e);
+            const dx=p.clientX-startX;
+            const dy=p.clientY-startY;
+            const maxX=Math.max(0, preview.clientWidth-ghost.offsetWidth-8);
+            const maxY=Math.max(0, preview.clientHeight-ghost.offsetHeight-8);
+            const nx=clamp(startL+dx,8,maxX);
+            const ny=clamp(startT+dy,8,maxY);
+            ghost.style.left=nx+'px';
+            ghost.style.top=ny+'px';
+
+            // Сохраняем координаты на реальном блоке, чтобы позиция не сбрасывалась.
+            real.dataset.editorX=nx;
+            real.dataset.editorY=ny;
+            real.style.left=nx+'px';
+            real.style.top=ny+'px';
+            if(e.cancelable) e.preventDefault();
+        };
+
+        const up = () => {
+            if(!dragging) return;
+            dragging=false;
+            ghost.classList.remove('part-hot');
+        };
+
+        ghost.addEventListener('pointerdown',down,{passive:false});
+        ghost.addEventListener('pointermove',move,{passive:false});
+        ghost.addEventListener('pointerup',up);
+        ghost.addEventListener('pointercancel',up);
+        ghost.addEventListener('touchstart',down,{passive:false});
+        ghost.addEventListener('touchmove',move,{passive:false});
+        ghost.addEventListener('touchend',up);
+        ghost.addEventListener('touchcancel',up);
+    }
+
+    // Длинное нажатие в любой свободной области — открывает выбор обоев.
+    // Используем только Pointer Events, чтобы touchmove не сбивал таймер на телефоне.
+    let longPressStartX = 0;
+    let longPressStartY = 0;
+    let longPressPointerId = null;
+    let longPressOpened = false;
+
+    function startLongPress(e){
+        if(app.classList.contains('preview-mode')) return;
+        if(e.button !== undefined && e.button !== 0) return;
+        if(e.target.closest('.element,.topbar,#addModal,#editorModal,#wallpaperModal')) return;
+
+        const x = e.clientX;
+        const y = e.clientY;
+
+        clearTimeout(longPressTimer);
+        longPressStartX = x;
+        longPressStartY = y;
+        longPressPointerId = e.pointerId;
+        longPressOpened = false;
+
+        try { canvas.setPointerCapture(e.pointerId); } catch(err) {}
+
+        longPressTimer = setTimeout(() => {
+            longPressTimer = null;
+            longPressOpened = true;
+            suppressClickUntil = Date.now() + 650;
+            openWallpaperWithModule();
+        }, 520);
+
+        if(e.cancelable) e.preventDefault();
+    }
+
+    function moveLongPress(e){
+        if(longPressPointerId !== e.pointerId || !longPressTimer) return;
+
+        const distance = Math.hypot(
+            e.clientX - longPressStartX,
+            e.clientY - longPressStartY
+        );
+
+        if(distance > 12){
+            cancelLongPress(e);
+        }
+    }
+
+    function cancelLongPress(e=null){
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+
+        if(e && longPressPointerId === e.pointerId){
+            try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
+        }
+
+        longPressPointerId = null;
+    }
+
+    function endLongPress(e){
+        if(longPressPointerId !== e.pointerId) return;
+
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+
+        if(longPressOpened){
+            suppressClickUntil = Date.now() + 350;
+        }
+
+        try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
+
+        longPressPointerId = null;
+    }
+
+    canvas.addEventListener('pointerdown', startLongPress, {passive:false});
+    canvas.addEventListener('pointermove', moveLongPress, {passive:false});
+    canvas.addEventListener('pointerup', endLongPress);
+    canvas.addEventListener('pointercancel', cancelLongPress);
+    canvas.addEventListener('lostpointercapture', () => {
+        if(longPressTimer && !longPressOpened){
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        longPressPointerId = null;
+    });
+
+    addModal.addEventListener('click',e=>{if(e.target===addModal)closeAddModal()});
+    editorModal.addEventListener('click',e=>{if(e.target===editorModal)closeEditorModal()});
+    wallpaperModal.addEventListener('click',e=>{if(e.target===wallpaperModal)closeWallpaperModal()});
+
+    // Не даём случайно прокручивать горизонтально, вертикальный скролл оставляем.
+    window.addEventListener('resize',()=>{
+        document.querySelectorAll('.element').forEach(el=>{
+            const left=parseFloat(el.style.left)||0;
+            el.style.left=clamp(left,8,innerWidth-el.offsetWidth-8)+'px';
+        });
+    });
+})();
+</script>
+</body>
+</html>
