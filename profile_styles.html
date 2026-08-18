@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biolyx Styles Module</title>
+<style>
+
+/* Biolyx reusable profile/widget styles. Loaded dynamically by index.html. */
+
+.biolyx-style-1 {
+        background: linear-gradient(145deg, rgba(15, 15, 15, 0.6), rgba(5, 5, 5, 0.8));
+        backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .biolyx-style-1 .name, .biolyx-style-1 .name-big { color: #fff; font-weight: 600; }
+    .biolyx-style-1 .username, .biolyx-style-1 .username-big { color: rgba(255,255,255,0.4); }
+    .biolyx-style-1 .desc, .biolyx-style-1 .description { color: rgba(255,255,255,0.5); }
+    .biolyx-style-1 .avatar, .biolyx-style-1 .single-avatar { border: 1px solid rgba(255, 255, 255, 0.08); }
+
+    /* =========================================
+       STYLE 2: TITANIUM GLASS (Новый)
+       ========================================= */
+    
+
+.biolyx-style-2 {
+        background: rgba(35, 35, 38, 0.4);
+        backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .biolyx-style-2 .name, .biolyx-style-2 .name-big { color: #e6e6e6; font-weight: 500; }
+    .biolyx-style-2 .username, .biolyx-style-2 .username-big { color: rgba(255,255,255,0.35); }
+    .biolyx-style-2 .desc, .biolyx-style-2 .description { color: rgba(255,255,255,0.55); }
+    .biolyx-style-2 .avatar, .biolyx-style-2 .single-avatar { filter: contrast(110%) saturate(80%); }
+
+    /* =========================================
+       STYLE 3: PREMIUM AURA GLASS (Сохранен)
+       ========================================= */
+    
+
+.biolyx-style-3 {
+        background: rgba(10, 10, 12, 0.4);
+        backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+        position: relative;
+        box-shadow: 0 30px 70px rgba(0,0,0,0.5);
+    }
+    .biolyx-style-3::before {
+        content: ''; position: absolute; inset: -1px;
+        border-radius: 28px;
+        background: linear-gradient(135deg, rgba(0,198,255,0.5), rgba(142,45,226,0.5), rgba(74,0,224,0.5));
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor; mask-composite: exclude;
+        pointer-events: none;
+    }
+    .biolyx-style-3 .name, .biolyx-style-3 .name-big { color: #fff; }
+    .biolyx-style-3 .username, .biolyx-style-3 .username-big { background: -webkit-linear-gradient(45deg, #00C6FF, #8E2DE2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .biolyx-style-3 .desc, .biolyx-style-3 .description { color: rgba(255,255,255,0.7); }
+
+    /* =========================================
+       STYLE 4: GHOST GLASS (Сохранен)
+       ========================================= */
+    
+
+.biolyx-style-4 {
+        background: rgba(255, 255, 255, 0.005);
+        backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        box-shadow: none;
+        cursor: pointer;
+    }
+    .biolyx-style-4 .profile-top, .biolyx-style-4 {
+        filter: blur(6px);
+        opacity: 0.3;
+        transition: filter 0.4s ease, opacity 0.4s ease;
+    }
+    .biolyx-style-4:active .demo-content,
+    .biolyx-style-4:hover .demo-content {
+        filter: blur(0);
+        opacity: 1;
+    }
+    .biolyx-style-4 .name, .biolyx-style-4 .name-big { color: #fff; font-weight: 400; letter-spacing: 2px; }
+    .biolyx-style-4 .username, .biolyx-style-4 .username-big { color: rgba(255,255,255,0.5); }
+    .biolyx-style-4 .desc, .biolyx-style-4 .description { color: rgba(255,255,255,0.6); }
+
+    /* =========================================
+       STYLE 5: PEARL GLASS (Новый)
+       ========================================= */
+    
+
+.biolyx-style-5 {
+        background: linear-gradient(145deg, rgba(255, 250, 245, 0.05), rgba(255, 255, 255, 0.01));
+        backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    }
+    .biolyx-style-5 .name, .biolyx-style-5 .name-big { color: #fff; font-weight: 800; }
+    .biolyx-style-5 .username, .biolyx-style-5 .username-big { color: rgba(255,235,225,0.5); }
+    .biolyx-style-5 .desc, .biolyx-style-5 .description { color: rgba(255,255,255,0.6); }
+
+    /* =========================================
+       STYLE 6: SAPPHIRE GLASS (Новый)
+       ========================================= */
+    
+
+.biolyx-style-6 {
+        background: linear-gradient(145deg, rgba(10, 15, 25, 0.5), rgba(5, 5, 12, 0.7));
+        backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+        border: 1px solid rgba(100, 150, 255, 0.08);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.7);
+    }
+    .biolyx-style-6 .name, .biolyx-style-6 .name-big { color: #f0f4ff; }
+    .biolyx-style-6 .username, .biolyx-style-6 .username-big { color: rgba(150, 180, 255, 0.6); }
+    .biolyx-style-6 .desc, .biolyx-style-6 .description { color: rgba(255,255,255,0.5); }
+
+    /* =========================================
+       STYLE 7: CHROME GLASS (Сохранен)
+       ========================================= */
+    
+
+.biolyx-style-7 {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.4));
+        backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-right-color: rgba(255, 255, 255, 0.05);
+        border-bottom-color: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+    }
+    .biolyx-style-7 .name, .biolyx-style-7 .name-big { text-transform: uppercase; font-weight: 800; letter-spacing: -0.5px; }
+    .biolyx-style-7 .username, .biolyx-style-7 .username-big { color: #aaa; text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 1px;}
+    .biolyx-style-7 .desc, .biolyx-style-7 .description { color: #ddd; }
+    .biolyx-style-7 .avatar, .biolyx-style-7 .single-avatar { border-radius: 14px; }
+
+    /* =========================================
+       STYLE 8: FLUENT ACRYLIC (Новый)
+       ========================================= */
+    
+
+.biolyx-style-8 {
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        position: relative;
+        overflow: hidden;
+    }
+    .biolyx-style-8::after {
+        content: ''; position: absolute; inset: 0;
+        background: url('data:image/svg+xml;utf8,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%221.5%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noise)%22 opacity=%220.04%22/%3E%3C/svg%3E');
+        pointer-events: none; z-index: 0;
+    }
+    .biolyx-style-8 .profile-top { z-index: 1; }
+    .biolyx-style-8 .name, .biolyx-style-8 .name-big { color: #fff; font-weight: 500; }
+    .biolyx-style-8 .username, .biolyx-style-8 .username-big { color: rgba(255,255,255,0.4); }
+    .biolyx-style-8 .desc, .biolyx-style-8 .description { color: rgba(255,255,255,0.6); }
+
+    /* =========================================
+       STYLE 9: SMOKED GLASS (Новый)
+       ========================================= */
+    
+
+.biolyx-style-9 {
+        background: rgba(12, 12, 12, 0.85);
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+    }
+    .biolyx-style-9 .name, .biolyx-style-9 .name-big { color: #ededed; font-weight: 500; }
+    .biolyx-style-9 .username, .biolyx-style-9 .username-big { color: rgba(255,255,255,0.3); }
+    .biolyx-style-9 .desc, .biolyx-style-9 .description { color: rgba(255,255,255,0.5); }
+    .biolyx-style-9 .avatar, .biolyx-style-9 .single-avatar { filter: brightness(0.9); border: 1px solid rgba(255,255,255,0.05); }
+
+    /* =========================================
+       STYLE 10: CLEAN PREMIUM GLASS (Сохранен)
+       ========================================= */
+    
+
+.biolyx-style-10 {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
+        backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        box-shadow: 0 30px 70px rgba(0,0,0,0.38);
+    }
+    .biolyx-style-10 .name, .biolyx-style-10 .name-big { font-weight: 800; }
+    .biolyx-style-10 .username, .biolyx-style-10 .username-big { color: rgba(255,255,255,0.55); }
+    .biolyx-style-10 .desc, .biolyx-style-10 .description { color: rgba(255,255,255,0.64); }
+
+
+
+.biolyx-style-target {
+    transition: background .25s ease, border-color .25s ease, box-shadow .25s ease,
+                color .25s ease, filter .25s ease, opacity .25s ease, transform .25s ease;
+}
+.biolyx-style-preview {
+    pointer-events: none;
+    width: 100%;
+    min-height: 90px;
+    position: relative;
+}
+
+.biolyx-style-list {
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    width:100%;
+}
+.biolyx-style-card {
+    width:100%;
+    min-height:110px;
+    padding:10px;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:18px;
+    background:rgba(255,255,255,.025);
+    color:#fff;
+    text-align:left;
+    cursor:pointer;
+    overflow:hidden;
+    transition:transform .2s ease, border-color .2s ease, background .2s ease;
+}
+.biolyx-style-card:active {
+    transform:scale(.985);
+}
+.biolyx-style-preview {
+    min-height:90px;
+    padding:16px;
+    border-radius:16px;
+}
+.biolyx-style-preview .preview-content {
+    position:relative;
+    z-index:2;
+}
+.biolyx-style-preview .name {
+    font-size:18px;
+    font-weight:800;
+}
+.biolyx-style-preview .username {
+    margin-top:4px;
+    font-size:12px;
+    color:rgba(255,255,255,.5);
+}
+.biolyx-style-preview .desc {
+    margin-top:8px;
+    font-size:11px;
+    line-height:1.4;
+    color:rgba(255,255,255,.6);
+}
+</style>
+</head>
+<body>
+
+<script>
+window.BiolyxStyles = (() => {
+    const names = ['Obsidian Glass', 'Titanium Glass', 'Premium Aura Glass', 'Ghost Glass', 'Pearl Glass', 'Sapphire Glass', 'Chrome Glass', 'Fluent Acrylic', 'Smoked Glass', 'Clean Premium Glass'];
+    const descriptions = ['Абсолютно черное стекло с глубоким блюром и тонким белым бликом.', 'Матовый темно-серый премиальный glass.', 'Стекло с градиентной окантовкой.', 'Максимум прозрачности, минимум цвета.', 'Жемчужное стекло с легким теплым оттенком.', 'Глубокое сапфировое / темно-синее стекло.', 'Хромированное стекло с металлическим контрастом.', 'Акриловое стекло с блюром и микро-текстурой.', 'Тонированное матовое стекло.', 'Чистое морозное glass — баланс прозрачности и плотности.'];
+
+    function makePreview(index) {
+        const wrap = document.createElement('button');
+        wrap.type = 'button';
+        wrap.className = 'biolyx-style-card';
+        wrap.dataset.styleIndex = String(index);
+
+        const demo = document.createElement('div');
+        demo.className = `biolyx-style-preview biolyx-style-${index + 1}`;
+
+        const content = document.createElement('div');
+        content.className = 'preview-content';
+
+        const name = document.createElement('div');
+        name.className = 'name';
+        name.textContent = names[index];
+
+        const username = document.createElement('div');
+        username.className = 'username';
+        username.textContent = '@example';
+
+        const desc = document.createElement('div');
+        desc.className = 'desc';
+        desc.textContent = descriptions[index];
+
+        content.append(name, username, desc);
+        demo.appendChild(content);
+        wrap.appendChild(demo);
+
+        return wrap;
+    }
+
+    function mount(target, onSelect) {
+        if (!target) return;
+        target.innerHTML = '';
+        const list = document.createElement('div');
+        list.className = 'biolyx-style-list';
+
+        for (let i = 0; i < 10; i++) {
+            const card = makePreview(i);
+            card.addEventListener('click', () => onSelect?.(i));
+            list.appendChild(card);
+        }
+        target.appendChild(list);
+    }
+
+    function applyToElement(el, index) {
+        if (!el) return;
+
+        // The profile element itself is the visual container.
+        // Standalone widgets have an inner .part-value that must receive the style,
+        // otherwise the style would affect only the transparent outer positioning wrapper.
+        const visualTarget =
+            el.dataset.type === 'profile'
+                ? el
+                : (el.querySelector('.part-value') || el.firstElementChild || el);
+
+        // Remove only Biolyx style classes from this exact visual target.
+        for (let i = 1; i <= 10; i++) {
+            visualTarget.classList.remove('biolyx-style-' + i);
+        }
+
+        visualTarget.classList.add('biolyx-style-target', 'biolyx-style-' + (index + 1));
+
+        // Store the selected style on the element and on the visual child.
+        el.dataset.style = String(index + 1);
+        visualTarget.dataset.style = String(index + 1);
+
+        // For profile containers the nested semantic parts already use
+        // .name/.username/.desc/.avatar, so the style's nested rules can work.
+        if (el.dataset.type === 'profile') {
+            el.querySelector('.part-name')?.classList.add('name');
+            el.querySelector('.part-username')?.classList.add('username');
+            el.querySelector('.part-description')?.classList.add('desc');
+            el.querySelector('.part-avatar')?.classList.add('avatar');
+        }
+    }
+
+    return { names, descriptions, mount, applyToElement };
+})();
+</script>
+
+</body>
+</html>

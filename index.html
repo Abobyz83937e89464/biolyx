@@ -120,12 +120,39 @@ button{color:inherit;border:0;outline:0}
 .username-big{font-size:15px;color:var(--muted)}
 .description{font-size:13px;line-height:1.45;color:rgba(255,255,255,.67)}
 
-#addModal,#editorModal,#wallpaperModal{
+#addModal,#editorModal,#wallpaperModal,#stylesModal{
     position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
     padding:12px;pointer-events:none;opacity:0;transition:opacity .3s ease;
     background:rgba(0,0,0,.45);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)
 }
-#addModal.open,#editorModal.open,#wallpaperModal.open{pointer-events:auto;opacity:1}
+#addModal.open,#editorModal.open,#wallpaperModal.open,#stylesModal.open{pointer-events:auto;opacity:1}
+
+/* Компактное меню долгого нажатия */
+#contextMenu{
+    position:fixed;z-index:140;width:190px;padding:7px;
+    border:1px solid rgba(255,255,255,.14);border-radius:19px;
+    background:rgba(14,14,14,.84);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+    box-shadow:0 24px 70px rgba(0,0,0,.5);
+    opacity:0;transform:translateY(8px) scale(.96);pointer-events:none;
+    transition:opacity .22s var(--ease),transform .28s var(--ease);
+    transform-origin:top left;
+}
+#contextMenu.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.context-menu-row{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border-radius:13px;
+    background:transparent;border:0;text-align:left;cursor:pointer;transition:.18s var(--ease)}
+.context-menu-row:active{background:rgba(255,255,255,.07);transform:scale(.985)}
+.context-menu-icon{width:31px;height:31px;border-radius:10px;display:grid;place-items:center;
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);flex:0 0 auto}
+.context-menu-icon svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.context-menu-title{font-size:12px;font-weight:780}
+.context-menu-desc{font-size:9px;color:var(--muted);margin-top:2px}
+.context-menu-row[hidden]{display:none}
+
+/* Полное окно стилей */
+#stylesModal .styles-sheet{width:min(100%,560px);max-height:calc(100dvh - 24px);}
+.styles-empty{min-height:310px;border:1px dashed rgba(255,255,255,.08);border-radius:22px;
+    display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.13);
+    font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
 .sheet{
     width:min(100%,500px);max-height:calc(100dvh - 24px);overflow:auto;
     background:rgba(13,13,13,.86);border:1px solid var(--line);border-radius:28px;
@@ -293,7 +320,33 @@ button{color:inherit;border:0;outline:0}
     </div>
 
     <div id="canvas"></div>
-    <div class="hint" id="hint">Зажми любое место экрана, чтобы открыть выбор обоев.<br>Элементы можно двигать пальцем.</div>
+    <div class="hint" id="hint">Зажми элемент, чтобы открыть меню действий.<br>Свободную область можно зажать для выбора обоев.</div>
+</div>
+
+<div id="contextMenu" aria-hidden="true">
+    <button class="context-menu-row" id="contextStyles" type="button">
+        <span class="context-menu-icon"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M8 17h12M4 17h0"/><circle cx="16" cy="7" r="2"/><circle cx="6" cy="17" r="2"/></svg></span>
+        <span><span class="context-menu-title">Стили</span><span class="context-menu-desc">Изменить стиль элемента</span></span>
+    </button>
+    <button class="context-menu-row" id="contextDistribution" type="button">
+        <span class="context-menu-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg></span>
+        <span><span class="context-menu-title">Распределение</span><span class="context-menu-desc">Только для окна профиля</span></span>
+    </button>
+</div>
+
+<div id="stylesModal">
+    <div class="sheet styles-sheet">
+        <div class="sheet-head">
+            <div>
+                <div class="sheet-title">На какой стиль меняем?</div>
+                <div class="sheet-sub" id="stylesTargetLabel">Тестовое окно выбора стиля</div>
+            </div>
+            <button class="close" id="closeStyles" type="button">
+                <svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>
+            </button>
+        </div>
+        <div class="styles-empty" id="stylesListMount"></div>
+    </div>
 </div>
 
 <div id="addModal">
@@ -429,6 +482,12 @@ button{color:inherit;border:0;outline:0}
     const addModal = document.getElementById('addModal');
     const editorModal = document.getElementById('editorModal');
     const wallpaperModal = document.getElementById('wallpaperModal');
+    const stylesModal = document.getElementById('stylesModal');
+    const contextMenu = document.getElementById('contextMenu');
+    const contextStyles = document.getElementById('contextStyles');
+    const contextDistribution = document.getElementById('contextDistribution');
+    const closeStyles = document.getElementById('closeStyles');
+    const stylesTargetLabel = document.getElementById('stylesTargetLabel');
     const addBtn = document.getElementById('addBtn');
     const previewBtn = document.getElementById('previewBtn');
     const closeAdd = document.getElementById('closeAdd');
@@ -440,6 +499,10 @@ button{color:inherit;border:0;outline:0}
     let selectedPart = 'avatar';
     let longPressTimer = null;
     let suppressClickUntil = 0;
+    let contextTarget = null;
+    let contextLongPressTimer = null;
+    let contextLongPressPointerId = null;
+    let contextLongPressOpened = false;
 
     const icons = {
       handle: '<svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14M5 8l3-3 3 3M13 16l3 3 3-3"/></svg>'
@@ -459,6 +522,110 @@ button{color:inherit;border:0;outline:0}
     function closeEditorModal(){ editorModal.classList.remove('open'); }
     function openWallpaper(){ wallpaperModal.classList.add('open'); }
     function closeWallpaperModal(){ wallpaperModal.classList.remove('open'); }
+
+    function closeContextMenu(){
+        contextMenu.classList.remove('open');
+        contextMenu.setAttribute('aria-hidden','true');
+        contextTarget = null;
+    }
+
+    function placeContextMenu(x,y){
+        const pad = 10;
+        const rect = contextMenu.getBoundingClientRect();
+        const w = rect.width || 190;
+        const h = rect.height || 90;
+        let left = x + 10;
+        let top = y + 10;
+        if(left + w > innerWidth - pad) left = x - w - 10;
+        if(top + h > innerHeight - pad) top = y - h - 10;
+        left = clamp(left,pad,Math.max(pad,innerWidth-w-pad));
+        top = clamp(top,pad,Math.max(pad,innerHeight-h-pad));
+        contextMenu.style.left = left + 'px';
+        contextMenu.style.top = top + 'px';
+    }
+
+    function openContextMenu(target,x,y){
+        if(!target || app.classList.contains('preview-mode')) return;
+        contextTarget = target;
+        contextDistribution.hidden = target.dataset.type !== 'profile';
+        contextMenu.classList.add('open');
+        contextMenu.setAttribute('aria-hidden','false');
+        // Сначала показываем, затем рассчитываем реальный размер для аккуратной привязки.
+        requestAnimationFrame(() => placeContextMenu(x,y));
+    }
+
+    function openStyles(){
+        if(!contextTarget) return;
+        const labels = { profile:'Окно профиля', name:'Имя', username:'Username', avatar:'Аватар', description:'Описание' };
+        stylesTargetLabel.textContent = labels[contextTarget.dataset.type] || 'Выбранный элемент';
+        stylesModal.classList.add('open');
+        mountStylesForTarget();
+        closeContextMenu();
+    }
+    function closeStylesModal(){ stylesModal.classList.remove('open'); }
+
+    let biolyxStylesLoaded = false;
+    let biolyxStylesLoading = null;
+
+    async function loadBiolyxStyles() {
+        if (biolyxStylesLoaded && window.BiolyxStyles) return window.BiolyxStyles;
+        if (biolyxStylesLoading) return biolyxStylesLoading;
+
+        biolyxStylesLoading = fetch('./profile_styles.html', { cache: 'no-store' })
+            .then(response => {
+                if (!response.ok) throw new Error('Не удалось загрузить profile_styles.html: HTTP ' + response.status);
+                return response.text();
+            })
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+
+                doc.querySelectorAll('style').forEach(style => {
+                    document.head.appendChild(document.importNode(style, true));
+                });
+
+                const scripts = Array.from(doc.querySelectorAll('script'));
+                for (const source of scripts) {
+                    const script = document.createElement('script');
+                    script.textContent = source.textContent;
+                    document.body.appendChild(script);
+                }
+
+                biolyxStylesLoaded = true;
+                if (!window.BiolyxStyles) throw new Error('BiolyxStyles API не найден');
+                return window.BiolyxStyles;
+            })
+            .catch(error => {
+                biolyxStylesLoading = null;
+                console.error('Biolyx styles loading failed:', error);
+                throw error;
+            });
+
+        return biolyxStylesLoading;
+    }
+
+    async function mountStylesForTarget() {
+        const target = contextTarget;
+        if (!target) return;
+
+        const mount = document.getElementById('stylesListMount');
+        if (!mount) return;
+
+        mount.innerHTML = '<div class="styles-empty">Загрузка стилей...</div>';
+
+        try {
+            const module = await loadBiolyxStyles();
+            mount.innerHTML = '';
+            module.mount(mount, index => {
+                // Apply ONLY to the element that opened the context menu.
+                module.applyToElement(target, index);
+                closeStylesModal();
+                select(target);
+            });
+        } catch (error) {
+            mount.innerHTML = '<div class="styles-empty">Не удалось загрузить стили</div>';
+        }
+    }
+
 
     let biolyxWallpapersLoaded = false;
     let biolyxWallpapersLoading = null;
@@ -529,6 +696,15 @@ button{color:inherit;border:0;outline:0}
     closeAdd.onclick = closeAddModal;
     closeEditor.onclick = closeEditorModal;
     closeWallpaper.onclick = closeWallpaperModal;
+    closeStyles.onclick = closeStylesModal;
+    contextStyles.onclick = openStyles;
+    contextDistribution.onclick = () => {
+        if(!contextTarget || contextTarget.dataset.type !== 'profile') return;
+        const target = contextTarget;
+        closeContextMenu();
+        select(target);
+        openEditor(target);
+    };
 
     previewBtn.onclick = () => {
         const mode = app.classList.toggle('preview-mode');
@@ -584,7 +760,8 @@ button{color:inherit;border:0;outline:0}
         enableDrag(el);
         if(type === 'profile') {
             el.classList.add('profile');
-            enableProfileLongPress(el);
+            // Длинное нажатие профиля обрабатывается общей системой contextMenu ниже.
+            // Старый прямой вызов редактора здесь намеренно отключён.
             el.addEventListener('click', e => {
                 if (Date.now() < suppressClickUntil) return;
                 if (app.classList.contains('preview-mode')) return;
@@ -807,34 +984,52 @@ button{color:inherit;border:0;outline:0}
         ghost.addEventListener('touchcancel',up);
     }
 
-    // Длинное нажатие в любой свободной области — открывает выбор обоев.
-    // Используем только Pointer Events, чтобы touchmove не сбивал таймер на телефоне.
+    // Длинное нажатие: на элементе открывает компактное меню рядом с точкой касания,
+    // на свободной области — оставляем старое поведение выбора обоев.
     let longPressStartX = 0;
     let longPressStartY = 0;
     let longPressPointerId = null;
     let longPressOpened = false;
+    let longPressTarget = null;
 
     function startLongPress(e){
         if(app.classList.contains('preview-mode')) return;
         if(e.button !== undefined && e.button !== 0) return;
-        if(e.target.closest('.element,.topbar,#addModal,#editorModal,#wallpaperModal')) return;
+
+        const target = e.target.closest?.('.element');
+        const isOverlay = e.target.closest?.('.topbar,#addModal,#editorModal,#wallpaperModal,#stylesModal,#contextMenu');
+        if(isOverlay) return;
+
+        // Если компактное меню уже открыто и пользователь нажал в пустое место,
+        // это считается отменой меню с той же плавной анимацией закрытия.
+        if(contextMenu.classList.contains('open') && !target){
+            closeContextMenu();
+            return;
+        }
 
         const x = e.clientX;
         const y = e.clientY;
-
         clearTimeout(longPressTimer);
         longPressStartX = x;
         longPressStartY = y;
         longPressPointerId = e.pointerId;
+        longPressTarget = target || null;
         longPressOpened = false;
 
-        try { canvas.setPointerCapture(e.pointerId); } catch(err) {}
+        if(!target){
+            try { canvas.setPointerCapture(e.pointerId); } catch(err) {}
+        }
 
         longPressTimer = setTimeout(() => {
             longPressTimer = null;
             longPressOpened = true;
             suppressClickUntil = Date.now() + 650;
-            openWallpaper();
+            if(longPressTarget){
+                select(longPressTarget);
+                openContextMenu(longPressTarget,x,y);
+            }else{
+                openWallpaper();
+            }
         }, 520);
 
         if(e.cancelable) e.preventDefault();
@@ -842,44 +1037,38 @@ button{color:inherit;border:0;outline:0}
 
     function moveLongPress(e){
         if(longPressPointerId !== e.pointerId || !longPressTimer) return;
-
-        const distance = Math.hypot(
-            e.clientX - longPressStartX,
-            e.clientY - longPressStartY
-        );
-
-        if(distance > 12){
-            cancelLongPress(e);
-        }
+        const distance = Math.hypot(e.clientX-longPressStartX,e.clientY-longPressStartY);
+        // Для элемента учитываем обычное перетаскивание: любое заметное движение отменяет меню.
+        if(distance > 12) cancelLongPress(e);
     }
 
     function cancelLongPress(e=null){
         clearTimeout(longPressTimer);
         longPressTimer = null;
-
-        if(e && longPressPointerId === e.pointerId){
+        longPressTarget = null;
+        if(e && longPressPointerId === e.pointerId && !e.target.closest?.('.element')){
             try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
         }
-
         longPressPointerId = null;
     }
 
     function endLongPress(e){
         if(longPressPointerId !== e.pointerId) return;
-
         clearTimeout(longPressTimer);
         longPressTimer = null;
-
-        if(longPressOpened){
-            suppressClickUntil = Date.now() + 350;
-        }
-
+        if(longPressOpened) suppressClickUntil = Date.now() + 350;
+        longPressTarget = null;
         try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
-
         longPressPointerId = null;
     }
 
     canvas.addEventListener('pointerdown', startLongPress, {passive:false});
+    // Нажатие по пустому месту вне элементов закрывает компактное меню.
+    document.addEventListener('pointerdown', e => {
+        if(!contextMenu.classList.contains('open')) return;
+        if(e.target.closest?.('#contextMenu,.element')) return;
+        closeContextMenu();
+    }, {passive:true});
     canvas.addEventListener('pointermove', moveLongPress, {passive:false});
     canvas.addEventListener('pointerup', endLongPress);
     canvas.addEventListener('pointercancel', cancelLongPress);
@@ -889,11 +1078,13 @@ button{color:inherit;border:0;outline:0}
             longPressTimer = null;
         }
         longPressPointerId = null;
+        longPressTarget = null;
     });
 
     addModal.addEventListener('click',e=>{if(e.target===addModal)closeAddModal()});
     editorModal.addEventListener('click',e=>{if(e.target===editorModal)closeEditorModal()});
     wallpaperModal.addEventListener('click',e=>{if(e.target===wallpaperModal)closeWallpaperModal()});
+    stylesModal.addEventListener('click',e=>{if(e.target===stylesModal)closeStylesModal()});
 
     // Не даём случайно прокручивать горизонтально, вертикальный скролл оставляем.
     window.addEventListener('resize',()=>{
